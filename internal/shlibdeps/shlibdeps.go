@@ -10,7 +10,10 @@ import (
 	"strings"
 )
 
-var lddRe = regexp.MustCompile(`^\t([^ ]+) => ([^\s]+)`)
+var (
+	lddRe = regexp.MustCompile(`^\t(?:[^ ]+) => ([^\s]+)`)
+	ldRe  = regexp.MustCompile(`^\t([^ ]+)\s`)
+)
 
 var errLddFailed = errors.New("ldd failed") // sentinel
 
@@ -33,16 +36,19 @@ func FindShlibDeps(ldd, fn string, env []string) ([]LibDep, error) {
 	var pkgs []LibDep
 	for _, line := range strings.Split(string(out), "\n") {
 		matches := lddRe.FindStringSubmatch(line)
+		if matches == nil && strings.Contains(line, "ld-linux") {
+			matches = ldRe.FindStringSubmatch(line)
+		}
 		if matches == nil {
 			continue
 		}
-		path, err := filepath.EvalSymlinks(matches[2])
+		path, err := filepath.EvalSymlinks(matches[1])
 		if err != nil {
 			return nil, err
 		}
 		pkgs = append(pkgs, LibDep{
 			Path:     path,
-			Basename: filepath.Base(matches[2]),
+			Basename: filepath.Base(matches[1]),
 		})
 	}
 	return pkgs, nil
