@@ -2,7 +2,6 @@ package shlibdeps
 
 import (
 	"errors"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,15 +21,12 @@ type LibDep struct {
 	Basename string
 }
 
-func FindShlibDeps(ldd, fn string, env []string) ([]LibDep, error) {
-	cmd := exec.Command(ldd, fn)
-	cmd.Env = env
+func FindShlibDeps(arg0 string, args []string, env []string) ([]LibDep, error) {
+	cmd := exec.Command(arg0, args...)
+	cmd.Env = append(env, "LD_TRACE_LOADED_OBJECTS=1")
 	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
-		// TODO: do not print an error for wrapper programs
-		log.Printf("TODO: exclude file %s: %v (out: %s)", fn, err, string(out))
-		return nil, errLddFailed // TODO: fix
 		return nil, err
 	}
 	var pkgs []LibDep

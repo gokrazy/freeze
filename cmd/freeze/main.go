@@ -24,10 +24,15 @@ func copyFile(ctx context.Context, src, dest string) error {
 	return nil
 }
 
-func freeze1(ctx context.Context, fn string) error {
+func freeze1(ctx context.Context, wrap, fn string) error {
 	log.Printf("%s", fn)
-	var env []string
-	deps, err := shlibdeps.FindShlibDeps("ldd", fn, env)
+	arg0 := fn
+	var args []string
+	if wrap != "" {
+		arg0 = wrap
+		args = []string{fn}
+	}
+	deps, err := shlibdeps.FindShlibDeps(arg0, args, os.Environ())
 	if err != nil {
 		return err
 	}
@@ -69,12 +74,13 @@ func freeze1(ctx context.Context, fn string) error {
 func freeze() error {
 	ctx := context.Background()
 
+	wrap := flag.String("wrap", "", "if non-empty, wrap the command execution (for ldd) with this program, e.g. qemu-aarch64-static when cross-compiling")
 	flag.Parse()
 	for idx, fn := range flag.Args() {
 		if idx > 0 {
 			log.Printf("")
 		}
-		if err := freeze1(ctx, fn); err != nil {
+		if err := freeze1(ctx, *wrap, fn); err != nil {
 			return err
 		}
 	}
