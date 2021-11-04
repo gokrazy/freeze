@@ -31,7 +31,7 @@ func FindShlibDeps(ldd, fn string, env []string) ([]LibDep, error) {
 		return nil, err
 	}
 	var pkgs []LibDep
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+	for _, line := range strings.Split(string(out), "\n") {
 		matches := lddRe.FindStringSubmatch(line)
 		if matches == nil {
 			continue
