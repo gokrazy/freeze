@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/gokrazy/freeze/internal/shlibdeps"
 )
@@ -52,9 +53,13 @@ func freeze1(ctx context.Context, wrap, fn string) error {
 		return err
 	}
 
+	ldName := "ld-linux-x86-64.so.2"
 	for _, dep := range deps {
 		if err := copyFile(ctx, dep.Path, filepath.Join(workDir, dep.Basename)); err != nil {
 			return err
+		}
+		if strings.Contains(dep.Basename, "ld-linux") {
+			ldName = dep.Basename
 		}
 	}
 
@@ -66,7 +71,10 @@ func freeze1(ctx context.Context, wrap, fn string) error {
 	if err := tar.Run(); err != nil {
 		return fmt.Errorf("%v: %v", tar.Args, err)
 	}
-	log.Printf("Download %s to your gokrazy device and run:\n\tLD_LIBRARY_PATH=$PWD ./ld-linux-x86-64.so.2 ./%s", filepath.Base(workDir+".tar"), filepath.Base(fn))
+	log.Printf("Download %s to your gokrazy device and run:\n\tLD_LIBRARY_PATH=$PWD ./%s ./%s",
+		filepath.Base(workDir+".tar"),
+		ldName,
+		filepath.Base(fn))
 	// TODO: can we make it a self-extracting archive somehow?
 	return nil
 }
