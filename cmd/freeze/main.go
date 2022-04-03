@@ -37,7 +37,11 @@ func freeze1(ctx context.Context, wrap, fn string) error {
 	if err != nil {
 		return err
 	}
-	workDir, err := ioutil.TempDir("", "freeze")
+	tmpdir := filepath.Join(os.TempDir(), "freeze")
+	if err := os.MkdirAll(tmpdir, 0755); err != nil {
+		return err
+	}
+	workDir, err := ioutil.TempDir(tmpdir, "freeze")
 	if err != nil {
 		return err
 	}
