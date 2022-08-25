@@ -38,6 +38,9 @@ func FindShlibDeps(arg0 string, args []string, env []string) ([]LibDep, error) {
 		if matches == nil {
 			continue
 		}
+		if matches[1] == "linux-vdso.so.1" {
+			continue // provided by the kernel, not an actual .so file
+		}
 		path, err := filepath.EvalSymlinks(matches[1])
 		if err != nil {
 			return nil, err
